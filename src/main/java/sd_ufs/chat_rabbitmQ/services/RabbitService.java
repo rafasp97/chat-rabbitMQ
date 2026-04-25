@@ -43,7 +43,7 @@ public class RabbitService {
         rabbitTemplate.convertAndSend("", queueName, message);
     }
 
-    public void consumeMessages(String queueName) {
+    public void consumeMessages(String queueName, Runnable determinePrefix) {
         container.stop();
         container.setQueueNames(queueName);
 
@@ -51,6 +51,8 @@ public class RabbitService {
         container.setMessageListener(message -> {
             String body = new String(message.getBody());
             System.out.println("\n" + body);
+
+            determinePrefix.run();
         });
 
         container.start();

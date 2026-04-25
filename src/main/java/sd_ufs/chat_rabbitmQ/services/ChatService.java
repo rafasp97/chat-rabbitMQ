@@ -43,7 +43,7 @@ public class ChatService {
         System.out.print("User: ");
         String input = scanner.nextLine();
         setUser(input, this::accessUser);
-        rabbitService.consumeMessages(this.user);
+        rabbitService.consumeMessages(this.user, this::determinePrefix);
     }
 
     private void setUser(String user, Runnable method) {
