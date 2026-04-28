@@ -52,9 +52,12 @@ public class RabbitService {
         //setMessageListener: define uma função que determina o que fazer quando uma mensagem chegar.
         this.container.setMessageListener(message -> {
             String body = new String(message.getBody());
-            System.out.println("\n" + body);
 
-            determinePrefix.run();
+            if(!body.contains(queueName)) {
+                System.out.println("\n" + body);
+                determinePrefix.run();
+            }
+
         });
         this.container.start();
     }
