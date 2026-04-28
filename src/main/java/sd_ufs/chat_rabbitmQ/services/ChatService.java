@@ -105,8 +105,11 @@ public class ChatService {
         this.sendTo = sendTo;
         this.prefix = prefix;
 
-        if (this.prefix == '@') {
-            this.rabbitService.createQueue(this.sendTo);
+        if (this.prefix == '@') this.rabbitService.createQueue(this.sendTo);
+
+        if (this.prefix == '#' &&  !this.rabbitService.exchangeExists(sendTo))  {
+            System.out.println("Group not found");
+            this.sendTo = "";
         }
     }
 

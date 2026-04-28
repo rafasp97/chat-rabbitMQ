@@ -7,6 +7,7 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import com.rabbitmq.client.Channel;
 import org.springframework.stereotype.Service;
 import sd_ufs.chat_rabbitmQ.utils.Utils;
 
@@ -56,6 +57,17 @@ public class RabbitService {
             determinePrefix.run();
         });
         this.container.start();
+    }
+
+    public boolean exchangeExists(String exchangeName) {
+        try {
+            return rabbitTemplate.execute(channel -> {
+                ((Channel) channel).exchangeDeclarePassive(exchangeName);
+                return true;
+            });
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public void createExchange(String exchangeName, String queueName) {
