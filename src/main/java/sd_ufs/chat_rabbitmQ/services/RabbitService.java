@@ -38,14 +38,11 @@ public class RabbitService {
         }
     }
 
-    public void sendMessage(String sendBy, String queueName, String msg) {
-        String message = String.format(
-                "%s @%s, diz: %s",
-                Utils.dateNow(),
-                sendBy,
-                msg
-        );
-        this.rabbitTemplate.convertAndSend("", queueName, message);
+    public void sendMessage(String sendBy, String sendTo, String msg, char prefix) {
+        String message = Utils.formatMessage(sendBy, sendTo, msg, prefix);
+
+        if(prefix == '@') this.rabbitTemplate.convertAndSend("", sendTo, message);
+        if(prefix == '#') this.rabbitTemplate.convertAndSend(sendTo, "", message);
     }
 
     public void consumeMessages(String queueName, Runnable determinePrefix) {

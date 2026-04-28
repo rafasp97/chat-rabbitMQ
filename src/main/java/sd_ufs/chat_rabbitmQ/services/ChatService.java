@@ -12,6 +12,7 @@ public class ChatService {
     private final Scanner scanner = new Scanner(System.in);
     private String user;
     private String sendTo = "";
+    private char prefix;
 
     public ChatService(RabbitService rabbitService) {
         this.rabbitService = rabbitService;
@@ -29,7 +30,7 @@ public class ChatService {
         switch (ActionType.defineAction(input)) {
             case SEND -> this.setSendTo(input.replaceFirst("^[#@!]", ""), input.charAt(0));
             case COMMAND -> this.activateCommand(input.replaceFirst("^[#@!]", ""));
-            case MESSAGE -> this.rabbitService.sendMessage(this.user, this.sendTo, input);
+            case MESSAGE -> this.rabbitService.sendMessage(this.user, this.sendTo, input, this.prefix);
         }
 
         this.processActions();
@@ -94,7 +95,7 @@ public class ChatService {
         method.run();
     }
 
-    private void setSendTo(String sendTo, char key) {
+    private void setSendTo(String sendTo, char prefix) {
         if (sendTo == null || sendTo.isBlank()) {
             this.sendTo = "";
             System.out.println("Nome de usuário inválido...");
@@ -102,8 +103,9 @@ public class ChatService {
         }
 
         this.sendTo = sendTo;
+        this.prefix = prefix;
 
-        if (key == '@') {
+        if (this.prefix == '@') {
             this.rabbitService.createQueue(this.sendTo);
         }
     }
