@@ -1,6 +1,9 @@
 package sd_ufs.chat_rabbitmQ.services;
 
 import org.springframework.stereotype.Service;
+import sd_ufs.chat_rabbitmQ.enums.ActionType;
+import sd_ufs.chat_rabbitmQ.enums.CommandType;
+
 import java.util.Scanner;
 
 @Service
@@ -20,51 +23,89 @@ public class ChatService {
 
     public void processActions() {
         this.determinePrefix();
+
         String input = scanner.nextLine();
 
-        if(input.contains("@")) {
-            this.setSendTo(input.replace("@", ""));
-        } else {
-            rabbitService.sendMessage(this.user, this.sendTo, input);
+        switch (ActionType.defineAction(input)) {
+            case SEND -> this.setSendTo(input.replaceFirst("^[#@!]", ""), input.charAt(0));
+            case COMMAND -> this.activateCommand(input.replaceFirst("^[#@!]", ""));
+            case MESSAGE -> this.rabbitService.sendMessage(this.user, this.sendTo, input);
         }
 
         this.processActions();
     }
 
     public void determinePrefix() {
-        if(!this.sendTo.isEmpty()){
-            System.out.print("@" + this.sendTo + "<< ");
+        if (this.sendTo != null && !this.sendTo.isEmpty()) {
+            String prefix = this.rabbitService.queueExists(sendTo) ? "@" : "#";
+            //TO DO: quando o grupo não existir e ele usar um prefixo #, vai começar a usar e vai da eror na hr de mandar msg.
+            System.out.print(prefix + this.sendTo + "<< ");
         } else {
             System.out.print("<< ");
-        } 
+        }
     }
 
     private void accessUser() {
         System.out.print("User: ");
         String input = scanner.nextLine();
         setUser(input, this::accessUser);
-        rabbitService.consumeMessages(this.user, this::determinePrefix);
+        this.rabbitService.consumeMessages(this.user, this::determinePrefix);
+    }
+
+    private void activateCommand(String input) {
+        String[] parts = input.trim().split("\\s+");
+        String command = parts[0];
+
+        switch (CommandType.defineCommand(command)) {
+            case ADDGROUP -> this.addGroupCommand(parts);
+            case ADDUSER -> this.addUserCommand(parts);
+            case UNKNOWN -> System.out.println("unknown command: " + command);
+        }
+    }
+
+    private void addGroupCommand(String[] parts){
+        if (parts.length != 2) {
+            System.out.println("Group not selected");
+            return;
+        }
+
+        String group = parts[1];
+        this.rabbitService.createExchange(group, this.user);
+    }
+
+    private void addUserCommand(String[] parts){
+        if (parts.length != 3) {
+            System.out.println("Group or User not selected");
+            return;
+        }
+
+        String user = parts[1];
+        String group = parts[2];
+        this.rabbitService.bindQueueToExchange(group, user);
     }
 
     private void setUser(String user, Runnable method) {
         if (!user.isEmpty()) {
             this.user = user;
-            rabbitService.createQueue(this.user);
+            this.rabbitService.createQueue(this.user);
             return;
         };
         System.out.println("Nome de usuário inválido...");
         method.run();
     }
 
-    private void setSendTo(String sendTo) {
-        if (!sendTo.isEmpty()) {
-            this.sendTo = sendTo;
-            rabbitService.createQueue(this.sendTo);
+    private void setSendTo(String sendTo, char key) {
+        if (sendTo == null || sendTo.isBlank()) {
+            this.sendTo = "";
+            System.out.println("Nome de usuário inválido...");
             return;
-        };
-        this.sendTo = "";
-        System.out.println("Nome de usuário inválido...");
-        
+        }
+
+        this.sendTo = sendTo;
+
+        if (key == '@') {
+            this.rabbitService.createQueue(this.sendTo);
+        }
     }
 
 }

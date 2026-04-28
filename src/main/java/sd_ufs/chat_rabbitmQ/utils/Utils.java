@@ -2,7 +2,6 @@ package sd_ufs.chat_rabbitmQ.utils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
 public class Utils {
 
     public static String dateNow() {
