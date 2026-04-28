@@ -6,8 +6,8 @@ public enum ActionType {
     MESSAGE;
 
     public static ActionType defineAction(String input) {
-        if (input.contains("@") || input.contains("#")) return ActionType.SEND;
-        if (input.contains("!")) return ActionType.COMMAND;
-        return ActionType.MESSAGE; 
+        if (input.startsWith("@") || input.startsWith("#")) return ActionType.SEND;
+        if (input.startsWith("!")) return ActionType.COMMAND;
+        else return ActionType.MESSAGE; 
     }
 }
