@@ -59,8 +59,10 @@ public class ChatService {
 
         switch (CommandType.defineCommand(command)) {
             case ADDGROUP -> this.addGroupCommand(parts);
+            case REMOVEGROUP -> this.removeGroupCommand(parts);
             case ADDUSER -> this.addUserCommand(parts);
-            case UNKNOWN -> System.out.println("unknown command: " + command);
+            case REMOVEUSER -> this.removeUserByGroupCommand(parts);
+            case UNKNOWN -> System.out.println("Unknown command: " + command);
         }
     }
 
@@ -71,7 +73,24 @@ public class ChatService {
         }
 
         String group = parts[1];
+
         this.rabbitService.createExchange(group, this.user);
+    }
+
+    private void removeGroupCommand(String[] parts){
+        if (parts.length != 2) {
+            System.out.println("Group not selected");
+            return;
+        }
+
+        String group = parts[1];
+
+        if(!this.rabbitService.exchangeExists(group)) {
+            System.out.println("Group not found");
+            return;
+        }
+
+        this.rabbitService.deleteExchange(group);
     }
 
     private void addUserCommand(String[] parts){
@@ -82,7 +101,31 @@ public class ChatService {
 
         String user = parts[1];
         String group = parts[2];
+
+        if(!this.rabbitService.queueExists(user) || !this.rabbitService.exchangeExists(group)) {
+            System.out.println("Group or User not found");
+            return;
+        }
+
         this.rabbitService.bindQueueToExchange(group, user);
+    }
+
+    private void removeUserByGroupCommand(String[] parts){
+        if (parts.length != 3) {
+            System.out.println("Group or User not selected");
+            return;
+        }
+
+        String user = parts[1];
+        String group = parts[2];
+
+        if(!this.rabbitService.queueExists(user) || !this.rabbitService.exchangeExists(group)) {
+            System.out.println("Group or User not found");
+            return;
+        }
+
+        this.rabbitService.unbindQueueFromExchange(group, user);
+
     }
 
     private void setUser(String user, Runnable method) {
@@ -91,14 +134,14 @@ public class ChatService {
             this.rabbitService.createQueue(this.user);
             return;
         };
-        System.out.println("Nome de usuário inválido...");
+        System.out.println("Invalid username...");
         method.run();
     }
 
     private void setSendTo(String sendTo, char prefix) {
         if (sendTo == null || sendTo.isBlank()) {
             this.sendTo = "";
-            System.out.println("Nome de usuário inválido...");
+            System.out.println("Invalid username...");
             return;
         }
 

@@ -79,13 +79,24 @@ public class RabbitService {
         this.bindQueueToExchange(exchangeName, queueName);
     }
 
+    public void deleteExchange(String exchangeName) {
+        this.rabbitAdmin.deleteExchange(exchangeName);
+    }
+
     public void bindQueueToExchange(String exchangeName, String queueName) {
-        this.createQueue(queueName);
         Binding binding = BindingBuilder
                 .bind(new Queue(queueName))
                 .to(new FanoutExchange(exchangeName));
         //O 'new Queue' não cria uma nova fila, apenas faz referência a uma fila existente (objeto Queue);
         //O rabbit depende do this.rabbitAdmin para fazer alterações no servidor rabbit.
         this.rabbitAdmin.declareBinding(binding);
+    }
+
+    public void unbindQueueFromExchange(String exchangeName, String queueName) {
+        Binding binding = BindingBuilder
+                .bind(new Queue(queueName))
+                .to(new FanoutExchange(exchangeName));
+
+        this.rabbitAdmin.removeBinding(binding);
     }
 }
