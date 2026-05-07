@@ -2,30 +2,60 @@ package sd_ufs.chat_rabbitmQ.utils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import com.google.protobuf.ByteString;
+import chat.Content;
+import chat.ContentType;
+import chat.Message;
 public class Utils {
 
-   public static String dateNow() {
+   public static String formatDate(String date, String hour) {
+        return "(" + date + " às " + hour + ")";
+    }
 
-        DateTimeFormatter formatter =
-                DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm");
+    public static String formatMessage(Message message) {
+
+        Content content = message.getContent();
+        String body = bytesToString(content.getBody());
+        String group = message.getGroup();
+        
+        String base = String.format(
+                "%s @%s",
+                formatDate(message.getDate(), message.getHour()),
+                message.getIssuer()
+        );
+
+        if(group.isEmpty()) 
+            return String.format("%s diz: %s", base, body);
+        else 
+            return String.format("%s#%s diz: %s", base, group, body);
+    }
+
+    public static Message prepareToSend(String sendBy, String group, String msg) {
+        Content content = Content.newBuilder()
+            .setType(ContentType.TEXT)
+            .setBody(stringToBytes(msg))
+            .setName("message")
+            .build();
 
         LocalDateTime now = LocalDateTime.now();
 
-        return "(" + now.format(formatter) + ")";
+        return Message.newBuilder()
+            .setIssuer(sendBy)
+            .setGroup(group)
+            .setDate(now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+            .setHour(now.format(DateTimeFormatter.ofPattern("HH:mm:ss")))
+            .setContent(content)
+            .build();
     }
 
-    public static String formatMessage(String sendBy, String sendTo, String msg, char prefix) {
-        String base = String.format(
-                "%s @%s",
-                dateNow(),
-                sendBy
-        );
+    protected static ByteString stringToBytes(String message) {
+        if (message == null) return ByteString.EMPTY;
+        return ByteString.copyFromUtf8(message);
+    }
 
-        return switch (prefix) {
-            case '@' -> String.format("%s diz: %s", base, msg);
-            case '#' -> String.format("%s#%s diz: %s", base, sendTo, msg);
-            default -> throw new IllegalArgumentException("Invalid Prefix: " + prefix);
-        };
+    protected static String bytesToString(ByteString message) {
+        if (message == null || message.isEmpty()) return "";
+        return message.toStringUtf8();
     }
 
 }

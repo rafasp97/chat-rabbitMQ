@@ -10,6 +10,7 @@ import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import com.rabbitmq.client.Channel;
 import org.springframework.stereotype.Service;
 import sd_ufs.chat_rabbitmQ.utils.Utils;
+import chat.Message;
 
 @Service
 public class RabbitService {
@@ -40,24 +41,36 @@ public class RabbitService {
     }
 
     public void sendMessage(String sendBy, String sendTo, String msg, char prefix) {
-        String message = Utils.formatMessage(sendBy, sendTo, msg, prefix);
 
-        if(prefix == '@') this.rabbitTemplate.convertAndSend("", sendTo, message);
-        if(prefix == '#') this.rabbitTemplate.convertAndSend(sendTo, "", message);
+        if(prefix == '@'){
+            Message message = Utils.prepareToSend(sendBy, "", msg);
+            this.rabbitTemplate.convertAndSend("", sendTo, message.toByteArray());
+            return;
+        } 
+
+        if(prefix == '#') {
+            Message message = Utils.prepareToSend(sendBy, sendTo, msg);
+            this.rabbitTemplate.convertAndSend(sendTo, "", message.toByteArray());
+            return;
+        }
+
+        System.out.println("Unknown Prefix: " + prefix);
     }
 
     public void consumeMessages(String queueName, Runnable determinePrefix) {
         this.container.stop();
         this.container.setQueueNames(queueName);
         //setMessageListener: define uma função que determina o que fazer quando uma mensagem chegar.
-        this.container.setMessageListener(message -> {
-            String body = new String(message.getBody());
-
-            if(!body.contains(queueName)) {
-                System.out.println("\n" + body);
-                determinePrefix.run();
+        this.container.setMessageListener(msg -> {
+            try {
+                Message message = Message.parseFrom(msg.getBody());
+                if (!message.getIssuer().equals(queueName)) {
+                    System.out.println("\n" + Utils.formatMessage(message));
+                    determinePrefix.run();
+                }
+            } catch (Exception e) {
+                System.out.println("Invalid message in RabbitMq service");
             }
-
         });
         this.container.start();
     }
