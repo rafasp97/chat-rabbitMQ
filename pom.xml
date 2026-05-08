@@ -55,6 +55,40 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<jvmArguments>
+						--sun-misc-unsafe-memory-access=allow
+					</jvmArguments>
+				</configuration>
+			</plugin>
+			<!-- PROTOBUF AUTO GENERATION -->
+			<plugin>
+				<groupId>org.xolstice.maven.plugins</groupId>
+				<artifactId>protobuf-maven-plugin</artifactId>
+				<version>0.6.1</version>
+
+				<configuration>
+					<protocArtifact>
+						com.google.protobuf:protoc:3.25.3:exe:windows-x86_64
+					</protocArtifact>
+
+					<protoSourceRoot>
+						${project.basedir}/src/main/proto
+					</protoSourceRoot>
+
+					<outputDirectory>
+						${project.build.directory}/generated-sources/protobuf/java
+					</outputDirectory>
+				</configuration>
+
+				<executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

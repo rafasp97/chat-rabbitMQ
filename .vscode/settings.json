@@ -1,0 +1,27 @@
+{
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.configuration.updateBuildConfiguration": "automatic",
+
+    "java.import.exclusions": [
+        "**/target/**"
+    ],
+
+    "files.watcherExclude": {
+        "**/target/**": true
+    },
+
+    "search.exclude": {
+        "**/target/**": true
+    },
+
+    "java.errors.incompleteClasspath.severity": "ignore",
+
+    "java.import.generatesMetadataFilesAtProjectRoot": false,
+
+    "files.exclude": {
+        "**/.classpath": true,
+        "**/.project": true,
+        "**/target": true,
+        "**/.factorypath": true
+    }
+}
