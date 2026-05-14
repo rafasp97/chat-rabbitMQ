@@ -1,9 +1,11 @@
 package sd_ufs.chat_rabbitmQ.services;
 
+import sd_ufs.chat_rabbitmQ.utils.Utils;
 import org.springframework.stereotype.Service;
 import sd_ufs.chat_rabbitmQ.enums.ActionType;
 import sd_ufs.chat_rabbitmQ.enums.CommandType;
-
+import sd_ufs.chat_rabbitmQ.model.BodyMessage;
+import java.io.File;
 import java.util.Scanner;
 
 @Service
@@ -30,7 +32,7 @@ public class ChatService {
         switch (ActionType.defineAction(input)) {
             case SEND -> this.setSendTo(input.replaceFirst("^[#@!]", ""), input.charAt(0));
             case COMMAND -> this.activateCommand(input.replaceFirst("^[#@!]", ""));
-            case MESSAGE -> this.rabbitService.sendMessage(this.user, this.sendTo, input, this.prefix);
+            case MESSAGE -> this.rabbitService.sendMessage(this.user, this.sendTo, BodyMessage.text(input), this.prefix);
         }
 
         this.processActions();
@@ -62,6 +64,7 @@ public class ChatService {
             case REMOVEGROUP -> this.removeGroupCommand(parts);
             case ADDUSER -> this.addUserCommand(parts);
             case REMOVEUSER -> this.removeUserByGroupCommand(parts);
+            case UPLOAD -> this.uploadFilesCommand(parts);
             case UNKNOWN -> System.out.println("Unknown command: " + command);
         }
     }
@@ -125,6 +128,21 @@ public class ChatService {
         }
 
         this.rabbitService.unbindQueueFromExchange(group, user);
+
+    }
+
+    private void uploadFilesCommand(String[] parts){
+        if (parts.length != 2) {
+            System.out.println("File not selected");
+            return;
+        }
+
+        String path = parts[1];
+        File file = Utils.findFile(path);
+
+        System.out.println("Sending file '" + file.getName() + "' to " + this.sendTo);
+
+        this.rabbitService.sendMessage(this.user, this.sendTo, BodyMessage.file(file), this.prefix);
 
     }
 

@@ -3,15 +3,8 @@ syntax = "proto3";
 option java_multiple_files = true;
 option java_package = "chat";
 
-enum ContentType {
-    TEXT = 0;
-    IMAGE = 1;
-    AUDIO = 2;
-    VIDEO = 3;
-}
-
 message Content {
-    ContentType type = 1;   
+    string type = 1;   
     bytes body = 2;  
     string name = 3;    
 }

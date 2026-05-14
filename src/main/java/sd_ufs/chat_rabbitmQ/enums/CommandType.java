@@ -5,6 +5,7 @@ public enum CommandType {
     REMOVEGROUP,
     ADDUSER,
     REMOVEUSER,
+    UPLOAD,
     UNKNOWN;
 
     public static CommandType defineCommand(String command) {

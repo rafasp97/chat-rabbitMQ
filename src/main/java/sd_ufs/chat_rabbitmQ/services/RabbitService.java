@@ -7,8 +7,12 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.scheduling.annotation.Async;
+
 import com.rabbitmq.client.Channel;
 import org.springframework.stereotype.Service;
+
+import sd_ufs.chat_rabbitmQ.model.BodyMessage;
 import sd_ufs.chat_rabbitmQ.utils.Utils;
 import chat.Message;
 
@@ -40,7 +44,10 @@ public class RabbitService {
         }
     }
 
-    public void sendMessage(String sendBy, String sendTo, String msg, char prefix) {
+    @Async
+    public void sendMessage(String sendBy, String sendTo, BodyMessage msg, char prefix) {
+
+        //TO REMEMBER: this.rabbitTemplate.convertAndSend(exchange, queue, message);
 
         if(prefix == '@'){
             Message message = Utils.prepareToSend(sendBy, "", msg);
