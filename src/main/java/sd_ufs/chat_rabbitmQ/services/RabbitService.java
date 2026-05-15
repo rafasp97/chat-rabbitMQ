@@ -8,10 +8,8 @@ import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.scheduling.annotation.Async;
-
 import com.rabbitmq.client.Channel;
 import org.springframework.stereotype.Service;
-
 import sd_ufs.chat_rabbitmQ.model.BodyMessage;
 import sd_ufs.chat_rabbitmQ.utils.Utils;
 import chat.Message;
@@ -44,24 +42,41 @@ public class RabbitService {
         }
     }
 
-    @Async
     public void sendMessage(String sendBy, String sendTo, BodyMessage msg, char prefix) {
 
         //TO REMEMBER: this.rabbitTemplate.convertAndSend(exchange, queue, message);
 
         if(prefix == '@'){
             Message message = Utils.prepareToSend(sendBy, "", msg);
-            this.rabbitTemplate.convertAndSend("", sendTo, message.toByteArray());
+            this.sendMessageToQueue(sendTo, message);
             return;
         } 
 
         if(prefix == '#') {
             Message message = Utils.prepareToSend(sendBy, sendTo, msg);
-            this.rabbitTemplate.convertAndSend(sendTo, "", message.toByteArray());
+            this.sendMessageToExchange(sendTo, message);
             return;
         }
 
-        System.out.println("Unknown Prefix: " + prefix);
+        System.out.println("Unknown Prefix " + prefix);
+    }
+
+    @Async
+    public void sendMessageToQueue(String sendTo, Message message){
+        this.rabbitTemplate.convertAndSend("", sendTo, message.toByteArray());
+        this.handleMessageAfterFileSubmission(sendTo, message);
+    }
+
+    @Async
+    public void sendMessageToExchange(String sendTo, Message message){
+        this.rabbitTemplate.convertAndSend(sendTo, "", message.toByteArray());
+        this.handleMessageAfterFileSubmission(sendTo, message);
+    }
+
+    @Async
+    public void handleMessageAfterFileSubmission(String sendTo, Message message){
+        if(message.getContent().getType() == "text/plain") return;
+        System.out.println("The file '" + message.getContent().getName() + "' was sent to " + sendTo);
     }
 
     public void consumeMessages(String queueName, Runnable determinePrefix) {

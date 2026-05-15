@@ -98,8 +98,7 @@ public class Utils {
     }
 
     public static File findFile(String path){
-        File file = new File(path);
-
+        File file = new File(System.getProperty("user.dir"), path);
         if (!file.exists() || !file.isFile()) {
             System.out.println("File not found");
             return null;
