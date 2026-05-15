@@ -45,7 +45,6 @@ public class RabbitService {
     public void sendMessage(String sendBy, String sendTo, BodyMessage msg, char prefix) {
 
         //TO REMEMBER: this.rabbitTemplate.convertAndSend(exchange, queue, message);
-
         if(prefix == '@'){
             Message message = Utils.prepareToSend(sendBy, "", msg);
             this.sendMessageToQueue(sendTo, message);
