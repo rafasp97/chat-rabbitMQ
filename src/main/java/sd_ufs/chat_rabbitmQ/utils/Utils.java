@@ -1,5 +1,7 @@
 package sd_ufs.chat_rabbitmQ.utils;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -8,17 +10,23 @@ import com.google.protobuf.ByteString;
 import chat.Content;
 import chat.Message;
 import sd_ufs.chat_rabbitmQ.model.BodyMessage;
+
 public class Utils {
 
    public static String formatDate(String date, String hour) {
-        return "(" + date + " às " + hour + ")";
+        return "(" + date + " at " + hour + ")";
     }
 
-    public static String formatMessage(Message message) {
+    public static String formatMessage(Message message, String sendTo) {
 
         Content content = message.getContent();
-        String body = bytesToString(content.getBody());
         String group = message.getGroup();
+        String issuer = message.getIssuer();
+        String date = message.getDate();
+        String hour = message.getHour();
+        String name = content.getName();
+        String body = bytesToString(content.getBody());
+        String type = content.getType();
         
         String base = String.format(
                 "%s @%s",
@@ -26,7 +34,16 @@ public class Utils {
                 message.getIssuer()
         );
 
-        if(group.isEmpty()) 
+        if(!"text/plain".equals(type)){
+            downloadFile(content.getBody().toByteArray(), name, issuer, sendTo, hour, date, group);
+
+            String groupPart = (group != null && !group.isBlank())
+                    ? " by group " + group
+                    : "";
+
+            return  String.format("%s File '%s' received from %s%s !", formatDate(date, hour), name, issuer, groupPart);
+        } 
+        else if(group.isEmpty()) 
             return String.format("%s diz: %s", base, body);
         else 
             return String.format("%s#%s diz: %s", base, group, body);
@@ -40,7 +57,7 @@ public class Utils {
         return Message.newBuilder()
             .setIssuer(sendBy)
             .setGroup(group)
-            .setDate(now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+            .setDate(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
             .setHour(now.format(DateTimeFormatter.ofPattern("HH:mm:ss")))
             .setContent(content)
             .build();
@@ -105,6 +122,38 @@ public class Utils {
         }
 
         return file;
+    }
+
+    private static void downloadFile(byte[] data, String fileName, String issuer, String sendTo, String hour, String date, String group) {
+
+        String FileNameFormated = buildFileName(fileName, issuer, sendTo, hour, date, group);
+
+        try {
+            Path path = Paths.get(
+                    System.getProperty("user.dir"),
+                    "downloads",
+                    FileNameFormated
+            );
+            Files.createDirectories(path.getParent());
+            Files.write(path, data);
+        } catch (IOException e) {
+            System.out.println("Failed to save file: ");
+        }
+    }
+
+    private static String buildFileName(String fileName, String issuer, String sendTo, String hour, String date, String group) {
+        return "from-" + issuer +
+                (!group.isBlank() ? "-by-" + group : "") +
+                "_to-" + sendTo +
+                "_date-" + sanitize(date) +
+                "_time-" + sanitize(hour) +
+                "_" + sanitize(fileName);
+    }
+
+    private static String sanitize(String input) {
+        return input == null
+                ? "unknown"
+                : input.replaceAll("[/\\\\:*?\"<>|]", "-");
     }
 
 }

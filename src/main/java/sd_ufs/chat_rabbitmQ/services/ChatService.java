@@ -142,7 +142,7 @@ public class ChatService {
 
         if(file == null) return;
 
-        System.out.println("Sending file '" + file.getName() + "' to " + this.sendTo);
+        System.out.println("Sending file '" + file.getName() + "' to " + this.sendTo + " !");
 
         this.rabbitService.sendMessage(this.user, this.sendTo, BodyMessage.file(file), this.prefix);
 

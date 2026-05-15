@@ -76,7 +76,7 @@ public class RabbitService {
     @Async
     public void handleMessageAfterFileSubmission(String sendTo, Message message){
         if(message.getContent().getType() == "text/plain") return;
-        System.out.println("The file '" + message.getContent().getName() + "' was sent to " + sendTo);
+        System.out.println("The file '" + message.getContent().getName() + "' was sent to " + sendTo + " !");
     }
 
     public void consumeMessages(String queueName, Runnable determinePrefix) {
@@ -87,7 +87,7 @@ public class RabbitService {
             try {
                 Message message = Message.parseFrom(msg.getBody());
                 if (!message.getIssuer().equals(queueName)) {
-                    System.out.println("\n" + Utils.formatMessage(message));
+                    System.out.println("\n" + Utils.formatMessage(message, queueName));
                     determinePrefix.run();
                 }
             } catch (Exception e) {
