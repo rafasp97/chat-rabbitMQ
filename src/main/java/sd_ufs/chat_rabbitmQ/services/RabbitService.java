@@ -38,6 +38,7 @@ public class RabbitService {
     public void createQueue(String queueName) {
         if (!queueExists(queueName)) {
             Queue queue = new Queue(queueName, true);
+                queue.addArgument("x-queue-type", "quorum");
             this.rabbitAdmin.declareQueue(queue);
         }
     }
