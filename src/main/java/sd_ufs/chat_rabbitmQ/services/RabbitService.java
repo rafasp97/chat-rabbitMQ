@@ -13,6 +13,16 @@ import org.springframework.stereotype.Service;
 import sd_ufs.chat_rabbitmQ.model.BodyMessage;
 import sd_ufs.chat_rabbitmQ.utils.Utils;
 import chat.Message;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.ArrayList;
+import java.util.List;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 @Service
 public class RabbitService {
@@ -20,6 +30,7 @@ public class RabbitService {
     private final RabbitAdmin rabbitAdmin;
     private final RabbitTemplate rabbitTemplate;
     private final SimpleMessageListenerContainer container;
+    private final HttpClient httpClient = HttpClient.newHttpClient();
 
     public RabbitService(
             RabbitAdmin rabbitAdmin,

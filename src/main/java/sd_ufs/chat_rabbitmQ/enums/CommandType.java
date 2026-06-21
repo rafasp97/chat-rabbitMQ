@@ -6,6 +6,8 @@ public enum CommandType {
     ADDUSER,
     REMOVEUSER,
     UPLOAD,
+    LISTGROUPS,
+    LISTUSERS,
     UNKNOWN;
 
     public static CommandType defineCommand(String command) {

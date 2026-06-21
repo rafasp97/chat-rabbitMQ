@@ -7,6 +7,7 @@ import sd_ufs.chat_rabbitmQ.enums.CommandType;
 import sd_ufs.chat_rabbitmQ.model.BodyMessage;
 import java.io.File;
 import java.util.Scanner;
+import java.util.List;
 
 @Service
 public class ChatService {
@@ -15,9 +16,11 @@ public class ChatService {
     private String user;
     private String sendTo = "";
     private char prefix;
+    private final RabbitManagementService rabbitManagementService;
 
-    public ChatService(RabbitService rabbitService) {
+    public ChatService(RabbitService rabbitService,RabbitManagementService rabbitManagementService) {
         this.rabbitService = rabbitService;
+        this.rabbitManagementService = rabbitManagementService;
     }
 
     public void start() {
@@ -65,6 +68,8 @@ public class ChatService {
             case ADDUSER -> this.addUserCommand(parts);
             case REMOVEUSER -> this.removeUserByGroupCommand(parts);
             case UPLOAD -> this.uploadFilesCommand(parts);
+            case LISTGROUPS -> this.listGroupsCommand();
+            case LISTUSERS -> this.listUsersCommand(parts);
             case UNKNOWN -> System.out.println("Unknown command: " + command);
         }
     }
@@ -176,4 +181,34 @@ public class ChatService {
         }
     }
 
+    private void listGroupsCommand() {
+
+        List<String> groups = rabbitManagementService.listGroups(this.user);
+
+        if (groups.isEmpty()) {
+            System.out.println("You are not part of any group.");
+            return;
+        }
+
+        System.out.println(String.join(", ", groups));
+    }
+
+    private void listUsersCommand(String[] parts) {
+
+        if (parts.length != 2) {
+            System.out.println("Group not specified");
+            return;
+        }
+
+        String group = parts[1];
+
+        List<String> users = rabbitManagementService.listUsers(group);
+
+        if (users.isEmpty()) {
+            System.out.println("No users in this group.");
+            return;
+        }
+
+        System.out.println(String.join(", ", users));
+    }
 }
